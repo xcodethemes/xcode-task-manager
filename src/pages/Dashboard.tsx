@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTaskContext, Status } from '@/contexts/TaskContext';
 import { ProjectCard } from '@/components/ui-custom/ProjectCard';
@@ -37,19 +36,16 @@ const Dashboard = () => {
     );
   }
 
-  // Project stats
   const totalProjects = projects.length;
   const completedProjects = projects.filter(p => p.status === 'done').length;
   const inProgressProjects = projects.filter(p => p.status === 'in-progress').length;
 
-  // Task stats
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'done').length;
   const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
   const todoTasks = tasks.filter(t => t.status === 'todo').length;
   const reviewTasks = tasks.filter(t => t.status === 'review').length;
 
-  // Calculate due soon tasks (due within 7 days)
   const now = new Date();
   const in7Days = new Date();
   in7Days.setDate(now.getDate() + 7);
@@ -59,13 +55,11 @@ const Dashboard = () => {
     return dueDate > now && dueDate <= in7Days && task.status !== 'done';
   });
 
-  // Get the 3 most recent active projects
   const recentProjects = [...projects]
     .filter(p => p.status !== 'done')
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
     .slice(0, 3);
 
-  // Status distribution data
   const statusDistribution: Record<Status, number> = {
     'todo': todoTasks,
     'in-progress': inProgressTasks,
@@ -90,7 +84,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="glass-card animate-slide-up [animation-delay:100ms]">
           <CardHeader className="pb-2">
@@ -127,7 +120,12 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{employees.length}</div>
             <div className="flex items-center mt-2">
-              <Button variant="outline" size="sm" className="h-7 text-xs">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={() => navigate('/team/new')}
+              >
                 <UserPlus className="h-3 w-3 mr-1" /> Add Member
               </Button>
             </div>
@@ -150,7 +148,6 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Task Status Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="glass-card lg:col-span-2 animate-scale-in">
           <CardHeader>
@@ -220,7 +217,6 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Recent Tasks */}
       <div>
         <Card className="glass-card animate-scale-in [animation-delay:200ms]">
           <CardHeader>

@@ -1,10 +1,10 @@
-
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { mockProjects, mockTasks, mockEmployees } from '@/lib/data';
 
 // Define types
 export type Priority = 'low' | 'medium' | 'high';
 export type Status = 'todo' | 'in-progress' | 'review' | 'done';
+export type Role = 'admin' | 'employee';
 
 export interface Employee {
   id: string;
@@ -37,11 +37,20 @@ export interface Project {
   teamIds: string[];
 }
 
+export interface CurrentUser {
+  id: string;
+  name: string;
+  role: Role;
+  email: string;
+  avatar: string;
+}
+
 // Context state
 interface TaskState {
   tasks: Task[];
   projects: Project[];
   employees: Employee[];
+  currentUser: CurrentUser | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -60,6 +69,7 @@ type TaskAction =
   | { type: 'ADD_EMPLOYEE'; payload: Employee }
   | { type: 'UPDATE_EMPLOYEE'; payload: Employee }
   | { type: 'DELETE_EMPLOYEE'; payload: string }
+  | { type: 'SET_CURRENT_USER'; payload: CurrentUser | null }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null };
 
@@ -78,6 +88,9 @@ interface TaskContextType extends TaskState {
   getTasksByEmployee: (employeeId: string) => Task[];
   getProjectsByEmployee: (employeeId: string) => Project[];
   searchTasksAndProjects: (query: string) => { tasks: Task[], projects: Project[] };
+  login: (email: string, role?: Role) => CurrentUser | null;
+  logout: () => void;
+  isAdmin: () => boolean;
 }
 
 // Initial state
@@ -85,6 +98,7 @@ const initialState: TaskState = {
   tasks: [],
   projects: [],
   employees: [],
+  currentUser: null,
   isLoading: true,
   error: null,
 };
@@ -143,6 +157,8 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
         ...state,
         employees: state.employees.filter((employee) => employee.id !== action.payload),
       };
+    case 'SET_CURRENT_USER':
+      return { ...state, currentUser: action.payload };
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
     case 'SET_ERROR':
@@ -155,6 +171,19 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
 // Context provider
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(taskReducer, initialState);
+
+  // Check for logged in user in localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        dispatch({ type: 'SET_CURRENT_USER', payload: user });
+      } catch (e) {
+        localStorage.removeItem('currentUser');
+      }
+    }
+  }, []);
 
   // Load initial data
   useEffect(() => {
@@ -182,6 +211,41 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Helper functions
   const generateId = () => {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  };
+
+  // Login functionality
+  const login = (email: string, role: Role = 'employee'): CurrentUser | null => {
+    // In a real app, this would validate against a real auth system
+    const employee = state.employees.find(emp => emp.email === email);
+    
+    if (employee) {
+      // For demo purposes, we'll allow login for any employee
+      // and assign them a role based on the parameter or default to 'employee'
+      const user: CurrentUser = {
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        avatar: employee.avatar,
+        role: role  // In a real app, this would come from the database
+      };
+      
+      dispatch({ type: 'SET_CURRENT_USER', payload: user });
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      return user;
+    }
+    
+    return null;
+  };
+  
+  // Logout functionality
+  const logout = () => {
+    dispatch({ type: 'SET_CURRENT_USER', payload: null });
+    localStorage.removeItem('currentUser');
+  };
+  
+  // Check if current user is admin
+  const isAdmin = (): boolean => {
+    return state.currentUser?.role === 'admin';
   };
 
   // Context actions
@@ -234,36 +298,63 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'DELETE_EMPLOYEE', payload: id });
   };
 
-  // Filter functions
+  // Filter functions based on user role
   const getTasksByProject = (projectId: string) => {
-    return state.tasks.filter((task) => task.projectId === projectId);
+    // If user is admin, show all tasks for the project
+    // If user is employee, only show tasks assigned to them in this project
+    if (isAdmin()) {
+      return state.tasks.filter((task) => task.projectId === projectId);
+    } else if (state.currentUser) {
+      return state.tasks.filter(
+        (task) => 
+          task.projectId === projectId && 
+          task.assigneeId === state.currentUser?.id
+      );
+    }
+    return [];
   };
 
   const getTasksByEmployee = (employeeId: string) => {
-    return state.tasks.filter((task) => task.assigneeId === employeeId);
+    // If user is admin, show tasks for any employee
+    // If user is employee, only show their own tasks
+    if (isAdmin() || state.currentUser?.id === employeeId) {
+      return state.tasks.filter((task) => task.assigneeId === employeeId);
+    }
+    return [];
   };
 
   const getProjectsByEmployee = (employeeId: string) => {
-    return state.projects.filter((project) => 
-      project.teamIds.includes(employeeId)
-    );
+    // If user is admin, show projects for any employee
+    // If user is employee, only show their own projects
+    if (isAdmin() || state.currentUser?.id === employeeId) {
+      return state.projects.filter((project) => 
+        project.teamIds.includes(employeeId)
+      );
+    }
+    return [];
   };
 
-  // Search functionality
+  // Search functionality with role-based access
   const searchTasksAndProjects = (query: string) => {
     const lowerQuery = query.toLowerCase();
     
-    const matchedTasks = state.tasks.filter(
+    let matchedTasks = state.tasks.filter(
       task => 
         task.title.toLowerCase().includes(lowerQuery) ||
         task.description.toLowerCase().includes(lowerQuery)
     );
     
-    const matchedProjects = state.projects.filter(
+    let matchedProjects = state.projects.filter(
       project => 
         project.name.toLowerCase().includes(lowerQuery) ||
         project.description.toLowerCase().includes(lowerQuery)
     );
+    
+    // Filter results based on user role
+    if (!isAdmin() && state.currentUser) {
+      matchedTasks = matchedTasks.filter(task => task.assigneeId === state.currentUser?.id);
+      matchedProjects = matchedProjects.filter(project => project.teamIds.includes(state.currentUser?.id));
+    }
     
     return { tasks: matchedTasks, projects: matchedProjects };
   };
@@ -285,6 +376,9 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getTasksByEmployee,
         getProjectsByEmployee,
         searchTasksAndProjects,
+        login,
+        logout,
+        isAdmin,
       }}
     >
       {children}

@@ -1,34 +1,22 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { 
   Bell, 
   Menu, 
   Plus, 
   Search, 
-  User, 
-  LogOut, 
-  Settings,
+  X,
+  Loader2,
   ProjectorIcon,
   CheckSquare,
-  X,
-  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { Card } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
 import { PriorityBadge } from '@/components/ui-custom/PriorityBadge';
+import { UserMenu } from '@/components/ui-custom/UserMenu';
 
 interface HeaderProps {
   isSidebarOpen: boolean;
@@ -48,7 +36,6 @@ export const Header: React.FC<HeaderProps> = ({
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Function to get the current page title
   const getPageTitle = () => {
     const path = location.pathname;
     
@@ -71,7 +58,6 @@ export const Header: React.FC<HeaderProps> = ({
     
     setIsSearching(true);
     
-    // Simulate API delay
     setTimeout(() => {
       const results = searchTasksAndProjects(searchQuery);
       setSearchResults(results);
@@ -80,7 +66,6 @@ export const Header: React.FC<HeaderProps> = ({
     }, 300);
   };
 
-  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -93,14 +78,12 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  // Clear search
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults(null);
     setShowResults(false);
   };
 
-  // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -114,7 +97,6 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, []);
 
-  // Navigate to appropriate page based on the route
   const handleAddNewClick = () => {
     const path = location.pathname;
     
@@ -166,7 +148,6 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Search Results */}
           {showResults && (
             <Card className="absolute top-full mt-2 w-full max-h-[400px] overflow-auto shadow-lg z-50 animate-fade-in">
               <div className="p-2">
@@ -276,30 +257,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Plus className="h-4 w-4 mr-1" /> New Item
           </Button>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://i.pravatar.cc/150?img=12" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 glass-panel">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="h-4 w-4 mr-2" /> Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="h-4 w-4 mr-2" /> Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <LogOut className="h-4 w-4 mr-2" /> Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserMenu />
         </div>
       </div>
     </header>

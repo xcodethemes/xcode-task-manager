@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     {
       title: 'Team',
       icon: Users,
-      path: '/employees',
+      path: '/team',  // Changed from '/employees' to '/team' to match routes in App.tsx
     },
     {
       title: 'Reports',
