@@ -57,6 +57,9 @@ type TaskAction =
   | { type: 'UPDATE_PROJECT'; payload: Project }
   | { type: 'DELETE_PROJECT'; payload: string }
   | { type: 'SET_EMPLOYEES'; payload: Employee[] }
+  | { type: 'ADD_EMPLOYEE'; payload: Employee }
+  | { type: 'UPDATE_EMPLOYEE'; payload: Employee }
+  | { type: 'DELETE_EMPLOYEE'; payload: string }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null };
 
@@ -68,9 +71,13 @@ interface TaskContextType extends TaskState {
   addProject: (project: Omit<Project, 'id'>) => void;
   updateProject: (project: Project) => void;
   deleteProject: (id: string) => void;
+  addEmployee: (employee: Omit<Employee, 'id'>) => void;
+  updateEmployee: (employee: Employee) => void;
+  deleteEmployee: (id: string) => void;
   getTasksByProject: (projectId: string) => Task[];
   getTasksByEmployee: (employeeId: string) => Task[];
   getProjectsByEmployee: (employeeId: string) => Project[];
+  searchTasksAndProjects: (query: string) => { tasks: Task[], projects: Project[] };
 }
 
 // Initial state
@@ -122,6 +129,20 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
       };
     case 'SET_EMPLOYEES':
       return { ...state, employees: action.payload };
+    case 'ADD_EMPLOYEE':
+      return { ...state, employees: [...state.employees, action.payload] };
+    case 'UPDATE_EMPLOYEE':
+      return {
+        ...state,
+        employees: state.employees.map((employee) =>
+          employee.id === action.payload.id ? action.payload : employee
+        ),
+      };
+    case 'DELETE_EMPLOYEE':
+      return {
+        ...state,
+        employees: state.employees.filter((employee) => employee.id !== action.payload),
+      };
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
     case 'SET_ERROR':
@@ -197,6 +218,22 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'DELETE_PROJECT', payload: id });
   };
 
+  const addEmployee = (employee: Omit<Employee, 'id'>) => {
+    const newEmployee: Employee = {
+      ...employee,
+      id: generateId(),
+    };
+    dispatch({ type: 'ADD_EMPLOYEE', payload: newEmployee });
+  };
+
+  const updateEmployee = (employee: Employee) => {
+    dispatch({ type: 'UPDATE_EMPLOYEE', payload: employee });
+  };
+
+  const deleteEmployee = (id: string) => {
+    dispatch({ type: 'DELETE_EMPLOYEE', payload: id });
+  };
+
   // Filter functions
   const getTasksByProject = (projectId: string) => {
     return state.tasks.filter((task) => task.projectId === projectId);
@@ -212,6 +249,25 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
+  // Search functionality
+  const searchTasksAndProjects = (query: string) => {
+    const lowerQuery = query.toLowerCase();
+    
+    const matchedTasks = state.tasks.filter(
+      task => 
+        task.title.toLowerCase().includes(lowerQuery) ||
+        task.description.toLowerCase().includes(lowerQuery)
+    );
+    
+    const matchedProjects = state.projects.filter(
+      project => 
+        project.name.toLowerCase().includes(lowerQuery) ||
+        project.description.toLowerCase().includes(lowerQuery)
+    );
+    
+    return { tasks: matchedTasks, projects: matchedProjects };
+  };
+
   return (
     <TaskContext.Provider
       value={{
@@ -222,9 +278,13 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addProject,
         updateProject,
         deleteProject,
+        addEmployee,
+        updateEmployee,
+        deleteEmployee,
         getTasksByProject,
         getTasksByEmployee,
         getProjectsByEmployee,
+        searchTasksAndProjects,
       }}
     >
       {children}
