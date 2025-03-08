@@ -1,26 +1,13 @@
 
 import React, { useState } from 'react';
 import { useTaskContext, Employee } from '@/contexts/TaskContext';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Pagination } from '@/components/ui-custom/Pagination';
 import {
   Loader2,
   Search,
-  Plus,
-  MoreVertical,
-  Mail,
   UserPlus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +20,10 @@ const Team = () => {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const employeesPerPage = 12;
   
   // Apply filters
   let filteredEmployees = [...employees];
@@ -48,6 +39,18 @@ const Team = () => {
   
   // Sort alphabetically by name
   filteredEmployees.sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Pagination logic
+  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
+  const indexOfLastEmployee = currentPage * employeesPerPage;
+  const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
+  const currentEmployees = filteredEmployees.slice(indexOfFirstEmployee, indexOfLastEmployee);
+  
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (isLoading) {
     return (
@@ -90,22 +93,32 @@ const Team = () => {
       {/* Team members grid */}
       <div>
         {filteredEmployees.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredEmployees.map((employee) => {
-              const employeeTasks = tasks.filter(t => t.assigneeId === employee.id);
-              const employeeProjects = projects.filter(p => p.teamIds.includes(employee.id));
-              
-              return (
-                <TeamMemberCard
-                  key={employee.id}
-                  employee={employee}
-                  taskCount={employeeTasks.length}
-                  projectCount={employeeProjects.length}
-                  onClick={() => navigate(`/team/${employee.id}`)}
-                />
-              );
-            })}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {currentEmployees.map((employee) => {
+                const employeeTasks = tasks.filter(t => t.assigneeId === employee.id);
+                const employeeProjects = projects.filter(p => p.teamIds.includes(employee.id));
+                
+                return (
+                  <TeamMemberCard
+                    key={employee.id}
+                    employee={employee}
+                    taskCount={employeeTasks.length}
+                    projectCount={employeeProjects.length}
+                    onClick={() => navigate(`/team/${employee.id}`)}
+                  />
+                );
+              })}
+            </div>
+            
+            {totalPages > 1 && (
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </>
         ) : (
           <Card className="py-16 flex flex-col items-center justify-center text-center">
             {searchQuery ? (

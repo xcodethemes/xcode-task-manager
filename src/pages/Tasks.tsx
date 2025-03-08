@@ -4,6 +4,7 @@ import { useTaskContext, Status, Priority } from '@/contexts/TaskContext';
 import { TaskCard } from '@/components/ui-custom/TaskCard';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
 import { PriorityBadge } from '@/components/ui-custom/PriorityBadge';
+import { Pagination } from '@/components/ui-custom/Pagination';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,10 @@ const Tasks = () => {
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
   const [projectFilter, setProjectFilter] = useState<string | 'all'>('all');
   const [assigneeFilter, setAssigneeFilter] = useState<string | 'all'>('all');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 12;
 
   // Apply filters
   let filteredTasks = [...tasks];
@@ -72,11 +77,24 @@ const Tasks = () => {
   // Sort by due date (most urgent first)
   filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   
+  // Pagination logic
+  const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
+  const indexOfLastTask = currentPage * tasksPerPage;
+  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
+  
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
   const resetFilters = () => {
     setStatusFilter('all');
     setPriorityFilter('all');
     setProjectFilter('all');
     setAssigneeFilter('all');
+    setCurrentPage(1);
   };
   
   const isFiltering = statusFilter !== 'all' || priorityFilter !== 'all' || 
@@ -226,22 +244,32 @@ const Tasks = () => {
       {/* Task grid */}
       <div>
         {filteredTasks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredTasks.map((task) => {
-              const project = projects.find((p) => p.id === task.projectId);
-              const assignee = employees.find((e) => e.id === task.assigneeId);
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {currentTasks.map((task) => {
+                const project = projects.find((p) => p.id === task.projectId);
+                const assignee = employees.find((e) => e.id === task.assigneeId);
 
-              return (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  assignee={assignee}
-                  projectName={project?.name || 'Unknown Project'}
-                  onClick={() => navigate(`/tasks/${task.id}`)}
-                />
-              );
-            })}
-          </div>
+                return (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    assignee={assignee}
+                    projectName={project?.name || 'Unknown Project'}
+                    onClick={() => navigate(`/tasks/${task.id}`)}
+                  />
+                );
+              })}
+            </div>
+            
+            {totalPages > 1 && (
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </>
         ) : (
           <Card className="py-16 flex flex-col items-center justify-center text-center">
             {searchQuery || isFiltering ? (

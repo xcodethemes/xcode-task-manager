@@ -14,9 +14,12 @@ import Projects from "@/pages/Projects";
 import ProjectDetail from "@/pages/ProjectDetail";
 import NewProject from "@/pages/NewProject";
 import Team from "@/pages/Team";
+import TeamMemberDetail from "@/pages/TeamMemberDetail";
 import NewTeamMember from "@/pages/NewTeamMember";
+import DueSoonTasks from "@/pages/DueSoonTasks";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +68,7 @@ const AppRoutes = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         
         <Route path="/" element={
           <ProtectedRoute>
@@ -75,10 +79,12 @@ const AppRoutes = () => {
           <Route path="tasks" element={<Tasks />} />
           <Route path="tasks/:id" element={<TaskDetail />} />
           <Route path="tasks/new" element={<NewTask />} />
+          <Route path="due-soon" element={<DueSoonTasks />} />
           <Route path="projects" element={<Projects />} />
           <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="projects/new" element={<NewProject />} />
           <Route path="team" element={<Team />} />
+          <Route path="team/:id" element={<TeamMemberDetail />} />
           <Route path="team/new" element={
             <AdminRoute>
               <NewTeamMember />

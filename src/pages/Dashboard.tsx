@@ -155,7 +155,7 @@ const Dashboard = () => {
                 variant="outline" 
                 size="sm" 
                 className="h-7 text-xs"
-                onClick={() => navigate('/tasks')}
+                onClick={() => navigate('/due-soon')}
               >
                 <Clock className="h-3 w-3 mr-1" /> View All
               </Button>

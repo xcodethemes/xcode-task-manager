@@ -40,9 +40,14 @@ export const UserMenu = () => {
   // If no user is logged in, show login button
   if (!currentUser) {
     return (
-      <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
-        Sign In
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => navigate('/register')}>
+          Register
+        </Button>
+        <Button size="sm" onClick={() => navigate('/login')}>
+          Sign In
+        </Button>
+      </div>
     );
   }
 
@@ -56,7 +61,7 @@ export const UserMenu = () => {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 glass-panel">
+      <DropdownMenuContent align="end" className="w-56 bg-background/95 backdrop-blur-sm border">
         <DropdownMenuLabel className="flex flex-col gap-1">
           <div className="font-medium">{currentUser.name}</div>
           <div className="text-xs text-muted-foreground flex items-center">
@@ -70,7 +75,7 @@ export const UserMenu = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate(`/profile`)}>
+        <DropdownMenuItem onClick={() => navigate(`/team/${currentUser.id}`)}>
           <User className="h-4 w-4 mr-2" /> Profile
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate(`/settings`)}>

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTaskContext, Status } from '@/contexts/TaskContext';
 import { ProjectCard } from '@/components/ui-custom/ProjectCard';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
+import { Pagination } from '@/components/ui-custom/Pagination';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,10 @@ const Projects = () => {
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 9;
 
   // Apply filters
   let filteredProjects = [...projects];
@@ -53,8 +58,21 @@ const Projects = () => {
   // Sort by start date (newest first)
   filteredProjects.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
+  const indexOfLastProject = currentPage * projectsPerPage;
+  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
+  const currentProjects = filteredProjects.slice(indexOfFirstProject, indexOfLastProject);
+  
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
   const resetFilters = () => {
     setStatusFilter('all');
+    setCurrentPage(1);
   };
   
   const isFiltering = statusFilter !== 'all';
@@ -141,21 +159,31 @@ const Projects = () => {
       {/* Projects grid */}
       <div>
         {filteredProjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => {
-              const projectTasks = tasks.filter(t => t.projectId === project.id);
-              
-              return (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  tasks={projectTasks}
-                  employees={employees}
-                  onClick={() => navigate(`/projects/${project.id}`)}
-                />
-              );
-            })}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentProjects.map((project) => {
+                const projectTasks = tasks.filter(t => t.projectId === project.id);
+                
+                return (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    tasks={projectTasks}
+                    employees={employees}
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                  />
+                );
+              })}
+            </div>
+            
+            {totalPages > 1 && (
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </>
         ) : (
           <Card className="py-16 flex flex-col items-center justify-center text-center">
             {searchQuery || isFiltering ? (
