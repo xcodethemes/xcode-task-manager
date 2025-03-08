@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTaskContext, Status } from '@/contexts/TaskContext';
 import { ProjectCard } from '@/components/ui-custom/ProjectCard';
@@ -21,7 +22,11 @@ const Dashboard = () => {
     tasks, 
     projects, 
     employees, 
-    isLoading 
+    isLoading,
+    currentUser,
+    isAdmin,
+    getTasksByEmployee,
+    getProjectsByEmployee
   } = useTaskContext();
   const navigate = useNavigate();
 
@@ -36,26 +41,30 @@ const Dashboard = () => {
     );
   }
 
-  const totalProjects = projects.length;
-  const completedProjects = projects.filter(p => p.status === 'done').length;
-  const inProgressProjects = projects.filter(p => p.status === 'in-progress').length;
+  // Get filtered tasks and projects based on role
+  const filteredTasks = isAdmin() ? tasks : (currentUser ? getTasksByEmployee(currentUser.id) : []);
+  const filteredProjects = isAdmin() ? projects : (currentUser ? getProjectsByEmployee(currentUser.id) : []);
 
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.status === 'done').length;
-  const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
-  const todoTasks = tasks.filter(t => t.status === 'todo').length;
-  const reviewTasks = tasks.filter(t => t.status === 'review').length;
+  const totalProjects = filteredProjects.length;
+  const completedProjects = filteredProjects.filter(p => p.status === 'done').length;
+  const inProgressProjects = filteredProjects.filter(p => p.status === 'in-progress').length;
+
+  const totalTasks = filteredTasks.length;
+  const completedTasks = filteredTasks.filter(t => t.status === 'done').length;
+  const inProgressTasks = filteredTasks.filter(t => t.status === 'in-progress').length;
+  const todoTasks = filteredTasks.filter(t => t.status === 'todo').length;
+  const reviewTasks = filteredTasks.filter(t => t.status === 'review').length;
 
   const now = new Date();
   const in7Days = new Date();
   in7Days.setDate(now.getDate() + 7);
   
-  const dueSoonTasks = tasks.filter(task => {
+  const dueSoonTasks = filteredTasks.filter(task => {
     const dueDate = new Date(task.dueDate);
     return dueDate > now && dueDate <= in7Days && task.status !== 'done';
   });
 
-  const recentProjects = [...projects]
+  const recentProjects = [...filteredProjects]
     .filter(p => p.status !== 'done')
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
     .slice(0, 3);
@@ -71,8 +80,8 @@ const Dashboard = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back!</h1>
-          <p className="text-muted-foreground">Here's an overview of your team's work.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Welcome back, {currentUser?.name || 'User'}!</h1>
+          <p className="text-muted-foreground">Here's an overview of your {isAdmin() ? "team's" : ""} work.</p>
         </div>
         <div className="flex space-x-2 mt-4 sm:mt-0">
           <Button onClick={() => navigate('/tasks/new')}>
@@ -120,14 +129,16 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{employees.length}</div>
             <div className="flex items-center mt-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-7 text-xs"
-                onClick={() => navigate('/team/new')}
-              >
-                <UserPlus className="h-3 w-3 mr-1" /> Add Member
-              </Button>
+              {isAdmin() && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 text-xs"
+                  onClick={() => navigate('/team/new')}
+                >
+                  <UserPlus className="h-3 w-3 mr-1" /> Add Member
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -140,7 +151,12 @@ const Dashboard = () => {
             <div className="text-2xl font-bold">{dueSoonTasks.length}</div>
             <p className="text-xs text-muted-foreground">Tasks due in 7 days</p>
             <div className="flex items-center mt-2">
-              <Button variant="outline" size="sm" className="h-7 text-xs">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={() => navigate('/tasks')}
+              >
                 <Clock className="h-3 w-3 mr-1" /> View All
               </Button>
             </div>
@@ -161,7 +177,7 @@ const Dashboard = () => {
               <ProjectCard
                 key={project.id}
                 project={project}
-                tasks={tasks.filter(t => t.projectId === project.id)}
+                tasks={filteredTasks.filter(t => t.projectId === project.id)}
                 employees={employees}
                 onClick={() => navigate(`/projects/${project.id}`)}
               />
@@ -170,7 +186,7 @@ const Dashboard = () => {
               <div className="col-span-full flex flex-col items-center justify-center py-6 text-center">
                 <FileText className="h-10 w-10 text-muted-foreground opacity-40" />
                 <p className="mt-2 text-muted-foreground">No active projects found</p>
-                <Button variant="outline" size="sm" className="mt-4">
+                <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/projects/new')}>
                   <Plus className="h-4 w-4 mr-2" /> Create Project
                 </Button>
               </div>
@@ -209,7 +225,7 @@ const Dashboard = () => {
               </div>
               <ProgressBar value={completedTasks} max={totalTasks || 1} showLabel={false} color="success" />
               
-              <Button variant="outline" className="w-full mt-4">
+              <Button variant="outline" className="w-full mt-4" onClick={() => navigate('/tasks')}>
                 <Check className="h-4 w-4 mr-2" /> View All Tasks
               </Button>
             </div>
@@ -232,7 +248,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {tasks
+              {filteredTasks
                 .filter(t => t.status !== 'done')
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .slice(0, 8)
@@ -250,11 +266,11 @@ const Dashboard = () => {
                     />
                   );
                 })}
-              {tasks.filter(t => t.status !== 'done').length === 0 && (
+              {filteredTasks.filter(t => t.status !== 'done').length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-10 text-center">
                   <Check className="h-12 w-12 text-status-done opacity-40" />
                   <p className="mt-2 text-muted-foreground">All caught up! No pending tasks.</p>
-                  <Button variant="outline" size="sm" className="mt-4">
+                  <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/tasks/new')}>
                     <Plus className="h-4 w-4 mr-2" /> Create Task
                   </Button>
                 </div>

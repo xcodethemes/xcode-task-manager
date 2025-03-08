@@ -70,10 +70,10 @@ export const UserMenu = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate(`/profile`)}>
           <User className="h-4 w-4 mr-2" /> Profile
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate(`/settings`)}>
           <Settings className="h-4 w-4 mr-2" /> Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />

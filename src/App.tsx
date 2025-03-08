@@ -8,8 +8,10 @@ import { TaskProvider, useTaskContext } from "@/contexts/TaskContext";
 import TaskLayout from "@/components/layout/TaskLayout";
 import Dashboard from "@/pages/Dashboard";
 import Tasks from "@/pages/Tasks";
+import TaskDetail from "@/pages/TaskDetail";
 import NewTask from "@/pages/NewTask";
 import Projects from "@/pages/Projects";
+import ProjectDetail from "@/pages/ProjectDetail";
 import NewProject from "@/pages/NewProject";
 import Team from "@/pages/Team";
 import NewTeamMember from "@/pages/NewTeamMember";
@@ -71,8 +73,10 @@ const AppRoutes = () => {
         }>
           <Route index element={<Dashboard />} />
           <Route path="tasks" element={<Tasks />} />
+          <Route path="tasks/:id" element={<TaskDetail />} />
           <Route path="tasks/new" element={<NewTask />} />
           <Route path="projects" element={<Projects />} />
+          <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="projects/new" element={<NewProject />} />
           <Route path="team" element={<Team />} />
           <Route path="team/new" element={
