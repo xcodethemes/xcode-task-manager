@@ -8,7 +8,7 @@ export const mockEmployees: Employee[] = [
     name: 'Alex Johnson',
     role: 'Frontend Developer',
     avatar: 'https://i.pravatar.cc/150?img=1',
-    email: 'alex.johnson@example.com',
+    email: 'emp2@gmail.com',
   },
   {
     id: 'emp2',
@@ -22,14 +22,14 @@ export const mockEmployees: Employee[] = [
     name: 'Michael Chen',
     role: 'Backend Developer',
     avatar: 'https://i.pravatar.cc/150?img=3',
-    email: 'michael.chen@example.com',
+    email: 'emp1@gmail.com',
   },
   {
     id: 'emp4',
     name: 'Emily Rodriguez',
     role: 'Project Manager',
     avatar: 'https://i.pravatar.cc/150?img=4',
-    email: 'emily.rodriguez@example.com',
+    email: 'admin@gmail.com',
   },
   {
     id: 'emp5',
